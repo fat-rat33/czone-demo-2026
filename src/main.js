@@ -26,6 +26,27 @@
     });
   })();
 
+  // 触屏 / 窄屏：默认收起左右面板，把战场让出来
+  (function mobileDefaults() {
+    window.__mobileInit = true;
+    var narrow = window.innerWidth <= 900;
+    var touch = ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0;
+    var fromUrl = /panels=/.test(location.search || '');
+    if (narrow && !fromUrl) {
+      panelsHidden.left = true;
+      panelsHidden.right = true;
+    }
+    document.documentElement.classList.toggle('is-mobile', touch && narrow);
+  })();
+
+  window.__mobileResize = true;
+  window.addEventListener('orientationchange', function () {
+    setTimeout(function () {
+      if (R && R.resize) R.resize();
+      applyPanels();
+    }, 250);
+  });
+
   function applyPanels() {
     var hud = document.getElementById('hud');
     if (!hud) return;

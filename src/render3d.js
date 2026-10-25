@@ -150,6 +150,10 @@ var RENDER3D = (function () {
     var W = game.state.map.boardW, H = game.state.map.boardH;
     var CB = { x: W / 2, z: H / 2 };
 
+    // 触屏：禁止浏览器把手势当成页面滚动/缩放
+    canvas.style.touchAction = 'none';
+    canvas.style.webkitUserSelect = 'none';
+
     var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.shadowMap.enabled = true;
@@ -166,6 +170,14 @@ var RENDER3D = (function () {
     camera.position.set(CB.x - 30, 78, H + 26);
 
     var controls = new THREE.OrbitControls(camera, canvas);
+    // 单指旋转视角、双指缩放/平移
+    if (THREE.TOUCH) {
+      controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
+    }
+    controls.enablePan = true;
+    controls.panSpeed = 0.9;
+    controls.rotateSpeed = 0.85;
+    controls.zoomSpeed = 1.1;
     controls.target.set(CB.x, 0, CB.z);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
@@ -730,7 +742,20 @@ var RENDER3D = (function () {
         while (o && !o.userData.unitId) o = o.parent;
         if (o && o.userData.unitId) return o.userData.unitId;
       }
-      return null;
+      // 触屏兜底：按屏幕像素距离找最近的单位（手指比鼠标粗）
+      var maxPx = ('ontouchstart' in window) ? 46 : 18;
+      var best = null, bd = maxPx;
+      var v = new THREE.Vector3();
+      game.state.units.forEach(function (u) {
+        if (!u.alive) return;
+        v.set(u.pos.x, 1.0 + (u.elevation || 0), u.pos.y).project(camera);
+        if (v.z > 1) return;
+        var sx = rect.left + (v.x * 0.5 + 0.5) * rect.width;
+        var sy = rect.top + (-v.y * 0.5 + 0.5) * rect.height;
+        var d = Math.hypot(sx - clientX, sy - clientY);
+        if (d < bd) { bd = d; best = u.id; }
+      });
+      return best;
     }
 
     /* ------------------------------------------------------------- 尺寸 */
