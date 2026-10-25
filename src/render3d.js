@@ -722,10 +722,22 @@ var RENDER3D = (function () {
     var raycaster = new THREE.Raycaster();
     var pointer = new THREE.Vector2();
 
-    function groundPoint(clientX, clientY) {
+    /* 强制横屏时整个 #app 被旋转 90°，需要把屏幕坐标反算回画布本地坐标 */
+    function localPoint(clientX, clientY) {
       var rect = canvas.getBoundingClientRect();
-      pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-      pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+      if (document.documentElement.classList.contains('force-landscape')) {
+        // 顺时针旋转 90°：屏幕 x ← 本地 y，屏幕 y ← 本地 x 的反向
+        var lx = clientY - rect.top;
+        var ly = rect.width - (clientX - rect.left);
+        return { x: lx, y: ly, w: rect.height, h: rect.width };
+      }
+      return { x: clientX - rect.left, y: clientY - rect.top, w: rect.width, h: rect.height };
+    }
+
+    function groundPoint(clientX, clientY) {
+      var lp = localPoint(clientX, clientY);
+      pointer.x = (lp.x / lp.w) * 2 - 1;
+      pointer.y = -(lp.y / lp.h) * 2 + 1;
       raycaster.setFromCamera(pointer, camera);
       var hit = raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), new THREE.Vector3());
       return hit ? { x: hit.x, y: hit.z } : { x: 0, y: 0 };
@@ -733,8 +745,9 @@ var RENDER3D = (function () {
 
     function pickUnitAt(clientX, clientY) {
       var rect = canvas.getBoundingClientRect();
-      pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-      pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+      var lp = localPoint(clientX, clientY);
+      pointer.x = (lp.x / lp.w) * 2 - 1;
+      pointer.y = -(lp.y / lp.h) * 2 + 1;
       raycaster.setFromCamera(pointer, camera);
       var hits = raycaster.intersectObjects(unitGroup.children, true);
       for (var i = 0; i < hits.length; i++) {

@@ -40,11 +40,35 @@
   })();
 
   window.__mobileResize = true;
+
+  /** 手机竖屏 → 旋转画面当作横屏用；桌面永远不转 */
+  function applyOrientation() {
+    var touch = ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0;
+    var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    var narrow = Math.min(window.innerWidth, window.innerHeight) <= 1000;
+    var portrait = window.innerHeight > window.innerWidth;
+    var want = (touch || coarse) && narrow && portrait;
+    if (/force-landscape/.test(location.search || '')) want = true;   // force-landscape 调试
+    if (/no-rotate/.test(location.search || '')) want = false;
+    var now = document.documentElement.classList.contains('force-landscape');
+    if (want !== now) {
+      document.documentElement.classList.toggle('force-landscape', want);
+      setTimeout(function () { if (R && R.resize) R.resize(); }, 80);
+      setTimeout(function () { if (R && R.resize) R.resize(); }, 350);
+    }
+  }
+  window.addEventListener('resize', applyOrientation);
+  setTimeout(function () {
+    applyOrientation();
+    if (R && R.resize) R.resize();
+  }, 120);
+
   window.addEventListener('orientationchange', function () {
     setTimeout(function () {
+      applyOrientation();
       if (R && R.resize) R.resize();
       applyPanels();
-    }, 250);
+    }, 300);
   });
 
   function applyPanels() {

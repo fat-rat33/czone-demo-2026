@@ -864,35 +864,29 @@ h1.glitch {
   .active-info { margin-bottom: 4px; }
 }
 
-/* 手机竖屏：提示横屏（游戏本身是宽幅战场） */
-@media (max-width: 1000px) and (orientation: portrait) {
-  #rotate-hint { display: flex; }
-}
 
-#rotate-hint {
-  display: none;
-  position: fixed; inset: 0; z-index: 200;
-  align-items: center; justify-content: center;
-  background: rgba(6,8,11,.92);
-  color: #e6eef8; text-align: center;
-  font-size: 14px; line-height: 1.9;
-  flex-direction: column; gap: 14px;
-  padding: 24px;
+/* ============================================================
+   手机竖屏：直接把整个游戏旋转 90°，等于强制横屏
+   ============================================================ */
+html.force-landscape,
+html.force-landscape body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #05070a;
 }
-#rotate-hint .phone {
-  width: 54px; height: 92px;
-  border: 2px solid var(--amber);
-  border-radius: 8px;
-  animation: rot 2.2s ease-in-out infinite;
+html.force-landscape #app {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vh;
+  height: 100vw;
+  transform: rotate(90deg) translateY(-100%);
+  transform-origin: top left;
+  overflow: hidden;
 }
-@keyframes rot {
-  0%, 35% { transform: rotate(0deg); }
-  65%, 100% { transform: rotate(90deg); }
-}
-#rotate-hint b { color: var(--amber); }
-#rotate-hint small { color: var(--muted); font-size: 12px; }
-
-/* rotate-hint 强制：必须写在基础规则之后才能覆盖 display:none */
-@media (max-width: 1000px) and (orientation: portrait) {
-  #rotate-hint { display: flex !important; }
+html.force-landscape #screen-title,
+html.force-landscape .screen {
+  width: 100%;
+  height: 100%;
 }
