@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>测试版</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div id="app">
+  <canvas id="board"></canvas>
+
+  <!-- 战斗中 HUD -->
+  <div id="hud" class="hidden">
+    <div class="hud-top">
+      <div class="hud-mission">
+        <div class="zone-badge"></div>
+        <div>
+          <div class="mission-name">测试版</div>
+          <div class="mission-sub" id="tp-label">第 1 / 4 转折点 · 战略阶段</div>
+        </div>
+      </div>
+      <div class="hud-initiative" id="initiative-box">
+        <span class="lbl">先手</span>
+        <span class="val" id="initiative-name">—</span>
+      </div>
+      <div class="hud-scores">
+        <div class="score police">
+          <span class="side">警方</span>
+          <span class="vp" id="vp-police">0</span><span class="unit">VP</span>
+        </div>
+        <div class="vs">VS</div>
+        <div class="score rioters">
+          <span class="side">暴匪</span>
+          <span class="vp" id="vp-rioters">0</span><span class="unit">VP</span>
+        </div>
+      </div>
+      <div class="hud-cp">
+        <div class="cp-chip police"><span>CP</span><b id="cp-police">0</b></div>
+        <div class="cp-chip rioters"><span>CP</span><b id="cp-rioters">0</b></div>
+        <button class="btn tiny" id="btn-view-top" title="俯视">俯视</button>
+        <button class="btn tiny" id="btn-view-iso" title="斜视">斜视</button>
+        <button class="btn tiny" id="btn-view-reset" title="回到默认视角">复位</button>
+        <button class="btn tiny" id="btn-menu">菜单</button>
+      </div>
+    </div>
+
+    <button class="hud-tab tab-left" id="tab-left" title="收起左栏（[）">◀</button>
+    <button class="hud-tab tab-right" id="tab-right" title="收起右栏（]）">▶</button>
+    <button class="hud-tab tab-bottom" id="tab-bottom" title="收起行动栏（H）">▼</button>
+
+    <div class="hud-left">
+      <div class="panel" id="unit-panel">
+        <div class="panel-title">特工数据</div>
+        <div id="unit-body" class="panel-body empty">未选择特工</div>
+      </div>
+      <div class="panel" id="roster-panel">
+        <div class="panel-title">战场态势</div>
+        <div id="roster-body" class="panel-body"></div>
+      </div>
+    </div>
+
+    <div class="hud-bottom" id="action-bar">
+      <div class="active-info" id="active-info">选择一名就绪特工开始激活</div>
+      <div class="actions" id="actions"></div>
+    </div>
+
+    <div class="hud-right">
+      <div class="panel log-panel">
+        <div class="panel-title">作战记录 <span class="hint">(滚轮查看)</span></div>
+        <div id="log-body" class="panel-body log"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 屏幕层 -->
+  <div id="screens">
+
+    <!-- 标题 -->
+    <section class="screen active" id="scr-title">
+      <div class="title-wrap">
+        <div class="kicker"></div>
+        <h1 class="glitch" data-text="">测试版</h1>
+        <div class="subtitle"></div>
+        <div class="menu">
+          <button class="btn primary" data-go="roster">开始行动</button>
+        <button class="btn" id="btn-continue">继续游戏</button>
+        <button class="btn" id="btn-tutorial">新手教程</button>
+          <button class="btn" data-go="rules">规则速查</button>
+          <button class="btn" data-go="about">关于本作</button>
+        </div>
+        <div class="title-foot">
+          <span>90 × 66 英寸街区</span><i>·</i>
+          <span>4 个转折点</span><i>·</i>
+          <span id="title-counts"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 编成 -->
+    <section class="screen" id="scr-roster">
+      <div class="screen-head">
+        <h2>编成与装备</h2>
+        <div class="head-sub"></div>
+      </div>
+      <div class="roster-grid">
+        <div class="fac-card police">
+          <div class="fac-head">
+            <div class="fac-icon">PD</div>
+            <div>
+              <div class="fac-name">武装警察</div>
+              <div class="fac-desc">1 名指挥 + 12 名警员。装备精良、火力与无人机占优。</div>
+            </div>
+          </div>
+          <ul class="unit-list" id="police-list"></ul>
+          <div class="fac-foot">
+            <span>总人数：<b id="police-count">13</b></span>
+            <span>指挥点：<b>1 / 转折点</b></span>
+          </div>
+        </div>
+
+        <div class="fac-card rioters">
+          <div class="fac-head">
+            <div class="fac-icon">RIOT</div>
+            <div>
+              <div class="fac-name">暴匪</div>
+              <div class="fac-desc">1 名煽动者 + 17 名暴徒。人数压场，装备杂、靠人海与投掷物。</div>
+            </div>
+          </div>
+          <ul class="unit-list" id="rioter-list"></ul>
+          <div class="swap-panel">
+            <div class="swap-title">减员换装 <span class="tag">最多 4 次</span></div>
+            <div class="swap-note">每减 1 名暴匪，可为另 1 名暴匪换取更好的装备。</div>
+            <div class="swap-rows" id="swap-rows"></div>
+            <div class="swap-summary">
+              <span>当前人数：<b id="rioter-count">18</b></span>
+              <span>已换装：<b id="swap-count">0</b> / 4</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-foot">
+        <div class="mode-toggle" id="mode-toggle">
+          <span class="mt-label">对局模式</span>
+          <button class="mt-btn on" data-mode="hotseat">双人热座</button>
+          <button class="mt-btn" data-mode="ai">单人 vs 电脑</button>
+          <span class="mt-label" style="margin-left:10px">你执</span>
+          <button class="mt-btn on" data-human="police">警方</button>
+          <button class="mt-btn" data-human="rioters">暴匪</button>
+          <span class="mt-label" style="margin-left:14px" id="ai-level-label" hidden>电脑</span>
+          <button class="mt-btn" data-ai-level="rookie" id="ai-lv-rookie" hidden>新手</button>
+          <button class="mt-btn on" data-ai-level="veteran" id="ai-lv-veteran" hidden>老兵</button>
+          <button class="mt-btn" data-ai-level="ruthless" id="ai-lv-ruthless" hidden>凶狠</button>
+          <span class="mt-label" style="margin-left:14px">节奏</span>
+          <button class="mt-btn on" data-pace="1">标准（原规则）</button>
+          <button class="mt-btn" data-pace="1.5">快速 ×1.5</button>
+        </div>
+        <div class="foot-actions">
+          <button class="btn" data-go="title">返回</button>
+          <button class="btn primary" data-go="brief">确认编成</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 任务简报 -->
+    <section class="screen" id="scr-brief">
+      <div class="brief-wrap">
+        <div class="brief-top">
+          <div class="zone-badge big"></div>
+          <div>
+            <h2>测试版</h2>
+            <div class="head-sub">发生混乱但仍可压制</div>
+          </div>
+        </div>
+        <p class="brief-text" id="brief-text"></p>
+        <div class="brief-cols">
+          <div class="brief-box">
+            <h3>胜利条件</h3>
+            <ul>
+              <li>战斗持续 <b>4 个转折点</b>。</li>
+              <li>每个转折点结束时（第 1 个之后），控制 ≥1 个目标标识 <b>+1VP</b>；控制数多于对手再 <b>+1VP</b>。</li>
+              <li>每路行动 op 封顶 <b>6VP</b>；主行动 op 结束时追加该路 VP 的一半（向上取整）。</li>
+              <li>VP 多者获胜，持平为平局。</li>
+            </ul>
+          </div>
+          <div class="brief-box">
+            <h3>战场</h3>
+            <ul>
+              <li>棋盘 <b>90" × 66"</b>：C 区一整个街区（四个街角 + 中央十字路口）。</li>
+              <li>目标标识 <b>6 个</b>：A–D 在四栋<b>坍塌民房里</b>（站进去就吃重型掩体），E/F <b>紧贴中央街垒与路障</b>。</li>
+              <li>警方集结区在 <b>西侧</b>，暴匪集结区在 <b>东侧</b>。</li>
+              <li>双方轮流从集结区部署，先手方先部署。</li>
+            </ul>
+          </div>
+          <div class="brief-box">
+            <h3>操作要点</h3>
+            <ul>
+              <li>点击特工 → 选择行动 → 点击目标/位置。</li>
+              <li>隐匿命令：不能射击/冲锋，但有掩护时不是有效目标。</li>
+              <li>交战命令：能射击、能冲锋、能反应。</li>
+              <li>每名特工 APL 提升为 <b>4</b>；<b>转移</b>每个激活可用 2 次（其余行动仍限 1 次）。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="screen-foot">
+          <div></div>
+          <div class="foot-actions">
+            <button class="btn" data-go="roster">返回编成</button>
+            <button class="btn primary" id="btn-deploy">进入部署</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 结算 -->
+    <section class="screen" id="scr-result">
+      <div class="result-wrap">
+        <div class="kicker">战斗结束</div>
+        <h2 id="result-title">—</h2>
+        <div class="result-score" id="result-score"></div>
+        <div class="result-breakdown" id="result-breakdown"></div>
+        <div class="screen-foot">
+          <button class="btn primary" id="btn-again">再来一局</button>
+          <button class="btn" data-go="title">回到标题</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 规则 -->
+    <section class="screen" id="scr-rules">
+      <div class="doc-wrap">
+        <h2>规则速查</h2>
+        <div class="doc-grid">
+          <div class="doc-box">
+            <h3>回合结构</h3>
+            <p>战斗 = 4 个转折点。每个转折点 = 战略阶段（定先手、发 CP）→ 交战阶段（双方轮流激活 1 名就绪特工）。</p>
+            <p>CP：先手方 +1，第 1 转折点之后无先手方 +2。</p>
+          </div>
+          <div class="doc-box">
+            <h3>命令</h3>
+            <p><b>交战</b>：可射击、可冲锋、可反应。<b>隐匿</b>：不能射击/冲锋/反应，但有掩护时不是有效目标。</p>
+          </div>
+          <div class="doc-box">
+            <h3>通用行动</h3>
+            <p>转移 1AP（移动属性）· 冲刺 1AP（3"）· 后撤 2AP · 冲锋 1AP（移动 +2"，须在敌方控制范围内结束）· 射击 1AP · 近战 1AP · 拾取/放置标识 1AP。</p>
+          </div>
+          <div class="doc-box">
+            <h3>射击</h3>
+            <p>攻击骰 ≥ 命中即成功，6 关键、1 失败。防御方 3 枚防御骰（有掩护可先保留 1 个普通成功）。2 个普通成功可抵挡 1 个关键成功。未抵挡的成功造成伤害。</p>
+          </div>
+          <div class="doc-box">
+            <h3>掩护与遮挡</h3>
+            <p>阻碍地形在目标 1" 内且距离 &gt;2" → 掩护。重型地形阻碍且不在任一方 1" 内 → 遮挡（舍弃 1 成功、关键降普通）。</p>
+          </div>
+          <div class="doc-box">
+            <h3>近战</h3>
+            <p>双方同时掷，从攻方开始轮流结算：出击（造成伤害）或格挡（抵消对手未结算的骰子）。</p>
+          </div>
+        </div>
+        <div class="screen-foot">
+          <button class="btn primary" data-go="title">返回</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="scr-about">
+      <div class="doc-wrap">
+        <h2>关于本作</h2>
+        <p class="about-p"></p>
+        <p class="about-p"></p>
+        <p class="about-p dim">规则依据：本项目参考的战术小队规则文档，摘要见 docs/规则摘要.md。Demo 对少数规则做了简化（见 docs/实现说明.md）。</p>
+        <div class="screen-foot">
+          <button class="btn primary" data-go="title">返回</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- 弹窗：骰子 -->
+  <div class="modal-mask hidden" id="dice-modal">
+    <div class="modal dice-modal">
+      <div class="modal-head" id="dice-title">射击结算</div>
+      <div class="dice-body" id="dice-body"></div>
+      <div class="modal-foot">
+        <button class="btn primary" id="dice-ok">继续</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗：回合切换 -->
+  <div class="modal-mask hidden" id="tp-modal">
+    <div class="modal">
+      <div class="modal-head" id="tp-title">转折点结束</div>
+      <div class="dice-body" id="tp-body"></div>
+      <div class="modal-foot">
+        <button class="btn primary" id="tp-ok">继续</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗：暂停菜单 -->
+  <div class="modal-mask hidden" id="pause-modal">
+    <div class="modal narrow">
+      <div class="modal-head">暂停</div>
+      <div class="dice-body">
+        <button class="btn wide" id="pause-resume">继续战斗</button>
+        <button class="btn wide" id="pause-restart">重新开始</button>
+        <button class="btn wide" id="pause-title">回到标题</button>
+        <div class="key-help">
+          <div class="kh-title">快捷键</div>
+          <div class="kh-row"><b>M</b> 转移 · <b>D</b> 冲刺 · <b>C</b> 冲锋</div>
+          <div class="kh-row"><b>F</b> 后撤 · <b>S</b> 射击 · <b>X</b> 近战</div>
+          <div class="kh-row"><b>G</b> 拾取 · <b>V</b> 放置 · <b>R</b> 反应</div>
+          <div class="kh-row"><b>Space</b> 结束 · <b>Tab</b> 跳过 · <b>Esc</b> 取消</div>
+          <div class="kh-row"><b>[</b> 左栏 · <b>]</b> 右栏 · <b>H</b> 行动栏</div>
+          <div class="kh-row"><b>1/2/3</b> 视角 · <b>B</b> 碰撞盒</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="hidden"></div>
+</div>
+
+<script src="src/data.js"></script>
+<script src="src/engine.js"></script>
+<script src="vendor/three.min.js"></script>
+<script src="assets/models/models.js"></script>
+<script src="vendor/OrbitControls.js"></script>
+<script src="vendor/GLTFLoader.js"></script>
+<script src="src/render3d.js"></script>
+<script src="src/render.js"></script>
+<script src="src/ai.js"></script>
+  <script src="src/tutorial.js"></script>
+<script src="src/main.js"></script>
+</body>
+</html>
