@@ -794,3 +794,105 @@ h1.glitch {
   outline: 1px solid var(--amber);
   background: rgba(255,196,0,.12);
 }
+
+
+/* ============================================================
+   移动端适配：横屏优先
+   断点 1000px 覆盖手机横屏（844×390）与竖屏（390×844）
+   ============================================================ */
+@media (max-width: 1000px) {
+  html, body { overflow: hidden; }
+
+  .hud-top {
+    height: 46px;
+    padding: 0 8px;
+    gap: 8px;
+  }
+  .mission-name { font-size: 12.5px; letter-spacing: .04em; }
+  .mission-sub, .hud-initiative, .hud-cp { display: none; }
+  .hud-scores { gap: 8px; }
+  .score .vp { font-size: 19px; }
+  .score .side { font-size: 10px; }
+  .hud-top .btn-ghost, .hud-top .menu-btn { padding: 5px 8px; font-size: 11px; }
+
+  /* 侧栏改成浮层 */
+  .hud-left, .hud-right {
+    top: 52px; bottom: auto; height: calc(100% - 160px);
+    width: auto; left: 8px; right: 8px;
+    max-width: 340px;
+    z-index: 40;
+    box-shadow: 0 12px 40px rgba(0,0,0,.6);
+  }
+  .hud-right { left: auto; max-width: 360px; }
+
+  /* 行动栏：横屏时压扁成一条可横向滚动的按钮带 */
+  .hud-bottom {
+    left: 8px; right: 8px; bottom: 6px;
+    padding: 6px 8px;
+    max-height: 42vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .active-info { font-size: 12px; margin-bottom: 6px; }
+  #actions, .hud-bottom .actions {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .act-btn {
+    min-height: 46px;
+    min-width: 70px;
+    padding: 6px 9px;
+    font-size: 12.5px;
+    line-height: 1.15;
+  }
+  .act-btn .cost { font-size: 9.5px; }
+  .hud-tab { width: 28px; height: 28px; font-size: 13px; }
+
+  /* 部署横幅缩小 */
+  .deploy-banner { max-width: 92vw; font-size: 12px; padding: 8px 12px; }
+}
+
+/* 手机横屏：最省纵向空间的排布 */
+@media (max-width: 1000px) and (orientation: landscape) {
+  /* nowrap-scroll: 行动按钮单行横向滑动，省纵向空间 */
+  #actions, .hud-bottom .actions { flex-wrap: nowrap !important; overflow-x: auto; overflow-y: hidden; padding-bottom: 2px; scrollbar-width: none; }
+  #actions::-webkit-scrollbar, .hud-bottom .actions::-webkit-scrollbar { display: none; }
+  .act-btn { flex: 0 0 auto; }
+  .hud-top { height: 42px; }
+  .hud-left, .hud-right { top: 46px; height: calc(100% - 130px); }
+  .hud-bottom { bottom: 4px; max-height: 38vh; padding: 5px 8px; }
+  .act-btn { min-height: 42px; min-width: 64px; font-size: 12px; }
+  .active-info { margin-bottom: 4px; }
+}
+
+/* 手机竖屏：提示横屏（游戏本身是宽幅战场） */
+@media (max-width: 1000px) and (orientation: portrait) {
+  #rotate-hint { display: flex; }
+}
+
+#rotate-hint {
+  display: none;
+  position: fixed; inset: 0; z-index: 200;
+  align-items: center; justify-content: center;
+  background: rgba(6,8,11,.92);
+  color: #e6eef8; text-align: center;
+  font-size: 14px; line-height: 1.9;
+  flex-direction: column; gap: 14px;
+  padding: 24px;
+}
+#rotate-hint .phone {
+  width: 54px; height: 92px;
+  border: 2px solid var(--amber);
+  border-radius: 8px;
+  animation: rot 2.2s ease-in-out infinite;
+}
+@keyframes rot {
+  0%, 35% { transform: rotate(0deg); }
+  65%, 100% { transform: rotate(90deg); }
+}
+#rotate-hint b { color: var(--amber); }
+#rotate-hint small { color: var(--muted); font-size: 12px; }
+
+/* rotate-hint 强制：必须写在基础规则之后才能覆盖 display:none */
+@media (max-width: 1000px) and (orientation: portrait) {
+  #rotate-hint { display: flex !important; }
+}
