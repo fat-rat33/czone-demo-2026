@@ -865,28 +865,53 @@ h1.glitch {
 }
 
 
+
 /* ============================================================
-   手机竖屏：直接把整个游戏旋转 90°，等于强制横屏
+   手机竖屏专用布局（不旋转，直接适配）
    ============================================================ */
-html.force-landscape,
-html.force-landscape body {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: #05070a;
-}
-html.force-landscape #app {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vh;
-  height: 100vw;
-  transform: rotate(90deg) translateY(-100%);
-  transform-origin: top left;
-  overflow: hidden;
-}
-html.force-landscape #screen-title,
-html.force-landscape .screen {
-  width: 100%;
-  height: 100%;
+@media (max-width: 1000px) and (orientation: portrait) {
+  /* 竖屏专用布局 */
+  #board { top: 46px; bottom: 42vh; height: auto; }
+
+  .hud-top {
+    height: 44px;
+    padding: 0 8px;
+  }
+  .mission-name { font-size: 12px; }
+  .score .vp { font-size: 17px; }
+
+  .hud-bottom {
+    left: 6px; right: 6px; bottom: 6px;
+    max-height: 40vh;
+    overflow-y: auto;
+    padding: 6px;
+  }
+  #actions, .hud-bottom .actions {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    flex-wrap: wrap !important;
+    gap: 5px !important;
+    overflow: visible !important;
+  }
+  .actions .act-btn, #actions .act-btn {
+    flex: none !important;
+    width: 100% !important;
+  }
+  .act-btn {
+    width: 100%;
+    min-width: 0;
+    min-height: 46px;
+    font-size: 12px;
+    padding: 6px 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .active-info { font-size: 11.5px; margin-bottom: 5px; }
+
+  .hud-left, .hud-right {
+    top: 50px; bottom: auto;
+    height: calc(100% - 52vh);
+    max-width: none;
+  }
 }

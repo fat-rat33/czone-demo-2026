@@ -773,11 +773,14 @@ var RENDER3D = (function () {
 
     /* ------------------------------------------------------------- 尺寸 */
     function resize() {
-      var rect = canvas.parentElement.getBoundingClientRect();
-      var w = Math.max(320, rect.width), h = Math.max(240, rect.height);
+      // 用 canvas 自身的布局尺寸（竖屏时它只占上半屏），别用父容器
+      var cw = canvas.clientWidth, ch = canvas.clientHeight;
+      if (!cw || !ch) {
+        var rect = canvas.parentElement.getBoundingClientRect();
+        cw = rect.width; ch = rect.height;
+      }
+      var w = Math.max(320, cw), h = Math.max(240, ch);
       renderer.setSize(w, h, false);
-      canvas.style.width = w + 'px';
-      canvas.style.height = h + 'px';
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
     }
@@ -851,6 +854,15 @@ var RENDER3D = (function () {
 
     return {
       view: view,
+      /** 把整个棋盘框进画面（竖屏/小屏用） */
+      fitBoard: function () {
+        var W = game.state.map.boardW, H = game.state.map.boardH;
+        var aspect = camera.aspect || 1;
+        var dist = Math.max(W / Math.max(aspect, 0.4), H) * 0.95 + 14;
+        controls.target.set(W / 2, 0, H / 2);
+        camera.position.set(W / 2, dist * 1.15, H / 2 + dist * 0.62);
+        controls.update();
+      },
       focusAt: function (x, y) {
         // 照抄 cam=units 预设，再整体平移到目标区（俯角与距离天然一致）
         var dx = x - 28, dz = y - 22;

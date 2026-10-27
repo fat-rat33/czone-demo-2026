@@ -42,22 +42,28 @@
   window.__mobileResize = true;
 
   /** 手机竖屏 → 旋转画面当作横屏用；桌面永远不转 */
+  function fitForOrientation() {
+    if (!R) return;
+    var narrow = Math.min(window.innerWidth, window.innerHeight) <= 1000;
+    var portrait = window.innerHeight > window.innerWidth;
+    if (narrow && portrait && R.fitBoard) R.fitBoard();
+    else if (R.fitBoard) R.fitBoard();
+  }
+
   function applyOrientation() {
     var touch = ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0;
     var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
     var narrow = Math.min(window.innerWidth, window.innerHeight) <= 1000;
     var portrait = window.innerHeight > window.innerWidth;
-    var want = (touch || coarse) && narrow && portrait;
-    if (/force-landscape/.test(location.search || '')) want = true;   // force-landscape 调试
-    if (/no-rotate/.test(location.search || '')) want = false;
-    var now = document.documentElement.classList.contains('force-landscape');
+    var want = false;   // 不再整体旋转：竖屏用专用布局
     if (want !== now) {
       document.documentElement.classList.toggle('force-landscape', want);
       setTimeout(function () { if (R && R.resize) R.resize(); }, 80);
       setTimeout(function () { if (R && R.resize) R.resize(); }, 350);
     }
   }
-  window.addEventListener('resize', applyOrientation);
+  window.addEventListener('resize', function () { applyOrientation(); });
+  window.addEventListener('resize', function () { clearTimeout(window.__fitT); window.__fitT = setTimeout(function () { if (typeof fitForOrientation === 'function') fitForOrientation(); }, 250); });
   setTimeout(function () {
     applyOrientation();
     if (R && R.resize) R.resize();
@@ -496,6 +502,8 @@
     try {
       if (window.THREE && window.RENDER3D && window.RENDER3D.create) {
         R = RENDER3D.create(canvas, game);
+        window.__fitWired = true;
+        setTimeout(function () { if (typeof fitForOrientation === 'function') fitForOrientation(); }, 350);
       }
     } catch (e) {
       console.warn('3D 初始化失败，退回 2D 渲染', e);
